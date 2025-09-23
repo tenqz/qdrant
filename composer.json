@@ -1,0 +1,19 @@
+{
+    "name": "tenqz/qdrant",
+    "description": "A powerful PHP library for seamless integration with the Qdrant vector database. Designed to provide an easy-to-use interface for storing, managing, and querying vector data in your PHP applications.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Tenqz\\Qdrant\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Oleg Patsay",
+            "email": "smmartbiz@gmail.com"
+        }
+    ],
+    "minimum-stability": "alpha",
+    "require": {}
+}
