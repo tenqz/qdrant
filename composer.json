@@ -15,5 +15,7 @@
         }
     ],
     "minimum-stability": "alpha",
-    "require": {}
+    "require": {
+        "php": "^7.2|^8.0"
+    }
 }
