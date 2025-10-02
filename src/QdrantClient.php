@@ -40,4 +40,47 @@ class QdrantClient
     {
         return $this->httpClient->request($method, $path, $data);
     }
+
+    // ========================================================================
+    // Collections API
+    // ========================================================================
+
+    /**
+     * Create a new collection with vector configuration
+     *
+     * Creates a collection to store vectors with specified size and distance metric.
+     * Optionally configure HNSW indexing and quantization for optimization.
+     *
+     * @param string $name Collection name
+     * @param int $vectorSize Dimension of vectors (e.g., 128, 384, 768)
+     * @param string $distance Distance metric: Cosine, Dot, Euclid, Manhattan
+     * @param array|null $hnswConfig Optional HNSW index configuration
+     * @param array|null $quantizationConfig Optional quantization settings
+     * @return array Response from Qdrant API with collection status
+     * @throws TransportException On network or API errors
+     */
+    public function createCollection(
+        string $name,
+        int $vectorSize,
+        string $distance = 'Cosine',
+        ?array $hnswConfig = null,
+        ?array $quantizationConfig = null
+    ): array {
+        $config = [
+            'vectors' => [
+                'size'     => $vectorSize,
+                'distance' => $distance,
+            ],
+        ];
+
+        if ($hnswConfig !== null) {
+            $config['hnsw_config'] = $hnswConfig;
+        }
+
+        if ($quantizationConfig !== null) {
+            $config['quantization_config'] = $quantizationConfig;
+        }
+
+        return $this->request('PUT', "/collections/{$name}", $config);
+    }
 }
