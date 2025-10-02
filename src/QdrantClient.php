@@ -113,4 +113,17 @@ class QdrantClient
     {
         return $this->request('DELETE', "/collections/{$name}");
     }
+
+    /**
+     * List all collections
+     *
+     * Retrieves a list of all collections in the Qdrant instance.
+     *
+     * @return array List of collections from Qdrant API
+     * @throws TransportException On network or API errors
+     */
+    public function listCollections(): array
+    {
+        return $this->request('GET', '/collections');
+    }
 }
