@@ -200,7 +200,7 @@ The library is fully covered with unit tests. To run tests:
 # Install dependencies
 composer install
 
-# Run all chechs and tests
+# Run all checks and tests
 composer test
 
 # Or separately:
@@ -217,6 +217,23 @@ The project uses modern tools for quality control:
 - **PHPStan** (level 5) — static code analysis
 - **PHP CS Fixer** — automatic code formatting
 - **PHP_CodeSniffer** — coding standards verification
+
+## 🤝 Contributing
+
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- Code style and quality standards
+- Commit message conventions
+- Testing requirements
+- Pull request process
+
+Quick commands:
+```bash
+composer test           # Run all checks
+composer run phpunit    # Run tests only
+composer run analyze    # Static analysis
+composer run cs-fix     # Auto-fix code style
+```
 
 ## 📄 License
 
