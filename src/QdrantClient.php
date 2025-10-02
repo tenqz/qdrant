@@ -98,4 +98,19 @@ class QdrantClient
     {
         return $this->request('GET', "/collections/{$name}");
     }
+
+    /**
+     * Delete a collection
+     *
+     * Permanently removes a collection and all its data from Qdrant.
+     * This operation cannot be undone.
+     *
+     * @param string $name Collection name
+     * @return array Response from Qdrant API
+     * @throws TransportException On network or API errors
+     */
+    public function deleteCollection(string $name): array
+    {
+        return $this->request('DELETE', "/collections/{$name}");
+    }
 }
