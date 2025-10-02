@@ -60,10 +60,9 @@ class CurlHttpClient implements HttpClientInterface
      * @param string $method HTTP method
      * @param string $path API endpoint path
      * @param array|null $data Request body data
-     * @return resource cURL handle (resource in PHP < 8.0, CurlHandle in PHP >= 8.0)
+     * @return mixed cURL handle (resource in PHP < 8.0, CurlHandle in PHP >= 8.0)
      * @throws SerializationException
      * @throws NetworkException
-     * @phpstan-return resource|\CurlHandle
      */
     private function prepareCurlRequest(string $method, string $path, ?array $data)
     {
@@ -84,11 +83,10 @@ class CurlHttpClient implements HttpClientInterface
     /**
      * Set common cURL options
      *
-     * @param resource $ch cURL handle
+     * @param mixed $ch cURL handle
      * @param string $url Request URL
      * @param string $method HTTP method
      * @return void
-     * @phpstan-param resource|\CurlHandle $ch
      */
     private function setCommonOptions($ch, string $url, string $method): void
     {
@@ -101,9 +99,8 @@ class CurlHttpClient implements HttpClientInterface
     /**
      * Set request headers
      *
-     * @param resource $ch cURL handle
+     * @param mixed $ch cURL handle
      * @return void
-     * @phpstan-param resource|\CurlHandle $ch
      */
     private function setHeaders($ch): void
     {
@@ -122,12 +119,11 @@ class CurlHttpClient implements HttpClientInterface
     /**
      * Set request body for POST/PUT/PATCH requests
      *
-     * @param resource $ch cURL handle
+     * @param mixed $ch cURL handle
      * @param string $method HTTP method
      * @param array|null $data Request body data
      * @return void
      * @throws SerializationException
-     * @phpstan-param resource|\CurlHandle $ch
      */
     private function setBody($ch, string $method, ?array $data): void
     {
@@ -144,9 +140,8 @@ class CurlHttpClient implements HttpClientInterface
     /**
      * Execute cURL request
      *
-     * @param resource $ch cURL handle
+     * @param mixed $ch cURL handle
      * @return array [response, httpCode, error]
-     * @phpstan-param resource|\CurlHandle $ch
      */
     private function executeRequest($ch): array
     {
