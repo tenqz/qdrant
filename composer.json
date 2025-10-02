@@ -16,7 +16,9 @@
     ],
     "minimum-stability": "alpha",
     "require": {
-        "php": "^7.2|^8.0"
+        "php": "^7.2|^8.0",
+        "ext-curl": "*",
+        "ext-json": "*"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.7",
