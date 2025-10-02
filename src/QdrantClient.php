@@ -83,4 +83,19 @@ class QdrantClient
 
         return $this->request('PUT', "/collections/{$name}", $config);
     }
+
+    /**
+     * Get collection information
+     *
+     * Retrieves detailed information about a collection including configuration,
+     * vector count, indexing status, and other metadata.
+     *
+     * @param string $name Collection name
+     * @return array Collection information from Qdrant API
+     * @throws TransportException On network or API errors
+     */
+    public function getCollection(string $name): array
+    {
+        return $this->request('GET', "/collections/{$name}");
+    }
 }
