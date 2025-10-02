@@ -674,4 +674,110 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertCount(2, $result['result']['collections']);
     }
+
+    // ========================================================================
+    // Upsert Points Tests
+    // ========================================================================
+
+    /**
+     * Test that upsertPoints inserts points successfully
+     *
+     * @testdox Upserts points into collection successfully
+     */
+    public function testUpsertPointsSuccessfully(): void
+    {
+        // Arrange
+        $points = [
+            ['id' => 1, 'vector' => [0.1, 0.2, 0.3], 'payload' => ['city' => 'Berlin']],
+            ['id' => 2, 'vector' => [0.4, 0.5, 0.6], 'payload' => ['city' => 'Moscow']],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 0,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('PUT', '/collections/test_collection/points', ['points' => $points])
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->upsertPoints('test_collection', $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that upsertPoints works with single point
+     *
+     * @testdox Upserts single point successfully
+     */
+    public function testUpsertSinglePoint(): void
+    {
+        // Arrange
+        $points = [
+            ['id' => 1, 'vector' => [0.1, 0.2, 0.3, 0.4]],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 1,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.000567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('PUT', '/collections/my_vectors/points', ['points' => $points])
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->upsertPoints('my_vectors', $points);
+
+        // Assert
+        $this->assertEquals('completed', $result['result']['status']);
+    }
+
+    /**
+     * Test that upsertPoints works without payload
+     *
+     * @testdox Upserts points without payload data
+     */
+    public function testUpsertPointsWithoutPayload(): void
+    {
+        // Arrange
+        $points = [
+            ['id' => 1, 'vector' => [0.1, 0.2, 0.3]],
+            ['id' => 2, 'vector' => [0.4, 0.5, 0.6]],
+            ['id' => 3, 'vector' => [0.7, 0.8, 0.9]],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 2,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('PUT', '/collections/vectors/points', ['points' => $points])
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->upsertPoints('vectors', $points);
+
+        // Assert
+        $this->assertCount(3, $points);
+    }
 }
