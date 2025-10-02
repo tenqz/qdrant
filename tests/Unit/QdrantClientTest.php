@@ -315,4 +315,191 @@ class QdrantClientTest extends TestCase
             'Manhattan distance' => ['Manhattan'],
         ];
     }
+
+    // ========================================================================
+    // Get Collection Tests
+    // ========================================================================
+
+    /**
+     * Test that getCollection retrieves collection information
+     *
+     * @testdox Retrieves collection information by name
+     */
+    public function testGetCollectionReturnsInfo(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'status'                => 'grey',
+                'optimizer_status'      => 'ok',
+                'indexed_vectors_count' => 0,
+                'points_count'          => 0,
+                'segments_count'        => 6,
+                'config'                => [
+                    'params' => [
+                        'vectors' => [
+                            'size'     => 768,
+                            'distance' => 'Cosine',
+                        ],
+                        'shard_number'             => 1,
+                        'replication_factor'       => 1,
+                        'write_consistency_factor' => 1,
+                        'on_disk_payload'          => true,
+                    ],
+                    'hnsw_config' => [
+                        'm'                    => 16,
+                        'ef_construct'         => 100,
+                        'full_scan_threshold'  => 10000,
+                        'max_indexing_threads' => 0,
+                        'on_disk'              => false,
+                    ],
+                    'optimizer_config' => [
+                        'deleted_threshold'        => 0.2,
+                        'vacuum_min_vector_number' => 1000,
+                        'default_segment_number'   => 0,
+                        'max_segment_size'         => null,
+                        'memmap_threshold'         => null,
+                        'indexing_threshold'       => 20000,
+                        'flush_interval_sec'       => 5,
+                        'max_optimization_threads' => null,
+                    ],
+                    'wal_config' => [
+                        'wal_capacity_mb'    => 32,
+                        'wal_segments_ahead' => 0,
+                        'wal_retain_closed'  => 1,
+                    ],
+                    'quantization_config' => null,
+                    'strict_mode_config'  => [
+                        'enabled' => false,
+                    ],
+                ],
+                'payload_schema' => [],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000403577,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections/test_collection', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getCollection('test_collection');
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getCollection works with different collection names
+     *
+     * @testdox Retrieves collection "$collectionName"
+     * @dataProvider collectionNameProvider
+     */
+    public function testGetCollectionWithVariousNames(string $collectionName): void
+    {
+        // Arrange
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', "/collections/{$collectionName}", null)
+            ->willReturn(['result' => ['status' => 'green']]);
+
+        // Act
+        $result = $this->client->getCollection($collectionName);
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
+
+    /**
+     * Data provider for testing various collection names
+     */
+    public static function collectionNameProvider(): array
+    {
+        return [
+            'Simple name'      => ['my_collection'],
+            'With numbers'     => ['collection_123'],
+            'With underscores' => ['test_collection_v2'],
+            'Production name'  => ['prod_vectors'],
+            'Development name' => ['dev_embeddings'],
+        ];
+    }
+
+    /**
+     * Test that getCollection returns complete collection metadata with quantization
+     *
+     * @testdox Returns collection with quantization configuration
+     */
+    public function testGetCollectionWithQuantization(): void
+    {
+        // Arrange
+        $fullResponse = [
+            'result' => [
+                'status'                => 'green',
+                'optimizer_status'      => 'ok',
+                'indexed_vectors_count' => 5000,
+                'points_count'          => 5000,
+                'segments_count'        => 10,
+                'config'                => [
+                    'params' => [
+                        'vectors' => [
+                            'size'     => 384,
+                            'distance' => 'Dot',
+                        ],
+                        'shard_number'             => 2,
+                        'replication_factor'       => 2,
+                        'write_consistency_factor' => 1,
+                        'on_disk_payload'          => false,
+                    ],
+                    'hnsw_config' => [
+                        'm'                    => 32,
+                        'ef_construct'         => 200,
+                        'full_scan_threshold'  => 20000,
+                        'max_indexing_threads' => 4,
+                        'on_disk'              => true,
+                    ],
+                    'optimizer_config' => [
+                        'deleted_threshold'        => 0.2,
+                        'vacuum_min_vector_number' => 1000,
+                        'default_segment_number'   => 5,
+                        'max_segment_size'         => 200000,
+                        'memmap_threshold'         => 50000,
+                        'indexing_threshold'       => 20000,
+                        'flush_interval_sec'       => 5,
+                        'max_optimization_threads' => 2,
+                    ],
+                    'wal_config' => [
+                        'wal_capacity_mb'    => 64,
+                        'wal_segments_ahead' => 2,
+                        'wal_retain_closed'  => 5,
+                    ],
+                    'quantization_config' => [
+                        'scalar' => [
+                            'type'       => 'int8',
+                            'quantile'   => 0.99,
+                            'always_ram' => true,
+                        ],
+                    ],
+                    'strict_mode_config' => [
+                        'enabled' => true,
+                    ],
+                ],
+                'payload_schema' => [],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002145,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections/production_collection', null)
+            ->willReturn($fullResponse);
+
+        // Act
+        $result = $this->client->getCollection('production_collection');
+
+        // Assert
+        $this->assertEquals($fullResponse, $result);
+    }
 }
