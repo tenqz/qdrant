@@ -5,7 +5,7 @@
 <h1 align="center">Qdrant PHP Client Library</h1>
 
 <p align="center">
-<span style="font-size: 1.2em;">Documentation for version v0.2.0</span>
+<span style="font-size: 1.2em;">Documentation for version v0.3.0</span>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 
 Qdrant PHP Client Library is a modern PHP library for working with the Qdrant vector database. The library is built on Clean Architecture and Domain-Driven Design (DDD) principles, making the code clear, extensible, and easy to test.
 
-**Current version (v0.2.0)** includes the basic transport infrastructure for communicating with the Qdrant API.
+**Current version (v0.3.0)** includes the transport infrastructure and core API methods for working with collections and points.
 
 ## ✨ Key Features
 
@@ -29,6 +29,9 @@ Qdrant PHP Client Library is a modern PHP library for working with the Qdrant ve
 - 🧪 **100% Test Coverage** — all components are thoroughly tested
 - 🐘 **Wide Compatibility** — works with PHP 7.2 - 8.x
 - ⚡ **Performance** — built on cURL for fast HTTP requests
+- 📦 **Collections API** — create, list, get, and delete collections
+- 🎯 **Points API** — upsert vectors with metadata into collections
+- ⚙️ **Advanced Configuration** — HNSW indexing and quantization support
 
 ## 📋 Requirements
 
@@ -122,12 +125,7 @@ use Tenqz\Qdrant\QdrantClient;
 $client = new QdrantClient($httpClient);
 ```
 
-### Step 3: Working with API (Coming Soon)
-
-> ⚠️ **Note**: Version v0.2.0 includes only the transport layer. 
-> Methods for working with collections, vectors, and search will be available in future versions.
-
-For now, you can use low-level API access through the HTTP client:
+### Step 3: Working with Collections
 
 ```php
 <?php
@@ -135,19 +133,114 @@ For now, you can use low-level API access through the HTTP client:
 use Tenqz\Qdrant\Transport\Domain\Exception\TransportException;
 
 try {
-    // Direct HTTP request to API
-    $response = $httpClient->request(
-        'GET',                    // HTTP method
-        '/collections',           // API endpoint path
-        null                      // Request data (null for GET)
+    // Create a collection
+    $result = $client->createCollection(
+        name: 'my_collection',
+        vectorSize: 384,              // Vector dimension
+        distance: 'Cosine'            // Distance metric: Cosine, Dot, Euclid, Manhattan
     );
     
-    print_r($response);
+    // List all collections
+    $collections = $client->listCollections();
+    print_r($collections);
+    
+    // Get collection information
+    $info = $client->getCollection('my_collection');
+    print_r($info);
+    
+    // Delete a collection
+    $result = $client->deleteCollection('my_collection');
     
 } catch (TransportException $e) {
     echo "Error: " . $e->getMessage();
 }
 ```
+
+### Step 4: Working with Points (Vectors)
+
+```php
+<?php
+
+try {
+    // Prepare points with vectors
+    $points = [
+        [
+            'id' => 1,
+            'vector' => [0.1, 0.2, 0.3, 0.4],
+            'payload' => ['city' => 'Berlin', 'category' => 'A']
+        ],
+        [
+            'id' => 2,
+            'vector' => [0.5, 0.6, 0.7, 0.8],
+            'payload' => ['city' => 'Moscow', 'category' => 'B']
+        ],
+    ];
+    
+    // Upsert points into collection
+    $result = $client->upsertPoints('my_collection', $points);
+    print_r($result);
+    
+} catch (TransportException $e) {
+    echo "Error: " . $e->getMessage();
+}
+```
+
+### Advanced Collection Configuration
+
+```php
+<?php
+
+// Create collection with HNSW index configuration
+$result = $client->createCollection(
+    name: 'optimized_collection',
+    vectorSize: 768,
+    distance: 'Cosine',
+    hnswConfig: [
+        'm' => 16,                      // Number of edges per node
+        'ef_construct' => 100,          // Construction time/accuracy trade-off
+        'full_scan_threshold' => 10000  // When to use full scan vs HNSW
+    ]
+);
+
+// Create collection with quantization for reduced memory usage
+$result = $client->createCollection(
+    name: 'quantized_collection',
+    vectorSize: 1536,
+    distance: 'Dot',
+    hnswConfig: null,
+    quantizationConfig: [
+        'scalar' => [
+            'type' => 'int8',           // Quantization type
+            'quantile' => 0.99,         // Quantile for range estimation
+            'always_ram' => true        // Keep quantized vectors in RAM
+        ]
+    ]
+);
+```
+
+## 📚 Available API Methods
+
+### Collections API
+
+| Method | Description | Parameters |
+|--------|-------------|------------|
+| `createCollection()` | Create a new collection | `name`, `vectorSize`, `distance`, `hnswConfig?`, `quantizationConfig?` |
+| `getCollection()` | Get collection information | `name` |
+| `listCollections()` | List all collections | — |
+| `deleteCollection()` | Delete a collection | `name` |
+
+### Points API
+
+| Method | Description | Parameters |
+|--------|-------------|------------|
+| `upsertPoints()` | Insert or update points | `collection`, `points[]` |
+
+### Distance Metrics
+
+- `Cosine` — Cosine similarity (recommended for most cases)
+- `Dot` — Dot product (for normalized vectors)
+- `Euclid` — Euclidean distance
+- `Manhattan` — Manhattan distance
 
 ## 🛡️ Error Handling
 
