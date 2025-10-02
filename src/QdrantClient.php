@@ -4,36 +4,40 @@ declare(strict_types=1);
 
 namespace Tenqz\Qdrant;
 
+use Tenqz\Qdrant\Transport\Domain\Exception\TransportException;
+use Tenqz\Qdrant\Transport\Domain\HttpClientInterface;
+
 /**
- * Simple Qdrant client for vector database operations
- *
- * Iteration 1: Basic implementation with cURL
+ * Qdrant client for vector database operations
  */
 class QdrantClient
 {
-    /** @var string */
-    private $baseUrl;
-
-    /** @var string|null */
-    private $apiKey;
-
-    /** @var int */
-    private $timeout;
+    /** @var HttpClientInterface */
+    private $httpClient;
 
     /**
-     * @param string $host Qdrant server host
-     * @param int $port Qdrant server port
-     * @param string|null $apiKey Optional API key for authentication
-     * @param int $timeout Request timeout in seconds
+     * @param HttpClientInterface $httpClient HTTP client instance
      */
-    public function __construct(
-        string $host = 'localhost',
-        int $port = 6333,
-        ?string $apiKey = null,
-        int $timeout = 30
-    ) {
-        $this->baseUrl = "http://{$host}:{$port}";
-        $this->apiKey = $apiKey;
-        $this->timeout = $timeout;
+    public function __construct(HttpClientInterface $httpClient)
+    {
+        $this->httpClient = $httpClient;
+    }
+
+    // ========================================================================
+    // Internal HTTP Methods
+    // ========================================================================
+
+    /**
+     * Execute HTTP request to Qdrant API
+     *
+     * @param string $method HTTP method (GET, POST, PUT, DELETE)
+     * @param string $path API endpoint path
+     * @param array|null $data Request body data
+     * @return array Response data
+     * @throws TransportException
+     */
+    private function request(string $method, string $path, ?array $data = null): array
+    {
+        return $this->httpClient->request($method, $path, $data);
     }
 }
