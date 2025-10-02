@@ -13,7 +13,7 @@ class QdrantException extends Exception
 {
     /** @var int */
     private $statusCode;
-    
+
     /** @var array|null */
     private $response;
 
@@ -28,7 +28,7 @@ class QdrantException extends Exception
         $this->statusCode = $statusCode;
         $this->response = $response;
     }
-    
+
     /**
      * Get HTTP status code
      *
@@ -38,7 +38,7 @@ class QdrantException extends Exception
     {
         return $this->statusCode;
     }
-    
+
     /**
      * Get full API response
      *
@@ -49,5 +49,3 @@ class QdrantException extends Exception
         return $this->response;
     }
 }
-
-
