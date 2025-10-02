@@ -502,4 +502,81 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertEquals($fullResponse, $result);
     }
+
+    // ========================================================================
+    // Delete Collection Tests
+    // ========================================================================
+
+    /**
+     * Test that deleteCollection sends correct DELETE request
+     *
+     * @testdox Deletes collection successfully
+     */
+    public function testDeleteCollectionSuccessfully(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => true,
+            'status' => 'ok',
+            'time'   => 0.020391438,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('DELETE', '/collections/test_collection', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deleteCollection('test_collection');
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deleteCollection works with different collection names
+     *
+     * @testdox Deletes collection "$collectionName"
+     * @dataProvider collectionNameProvider
+     */
+    public function testDeleteCollectionWithVariousNames(string $collectionName): void
+    {
+        // Arrange
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('DELETE', "/collections/{$collectionName}", null)
+            ->willReturn(['result' => true, 'status' => 'ok']);
+
+        // Act
+        $result = $this->client->deleteCollection($collectionName);
+
+        // Assert
+        $this->assertTrue($result['result']);
+    }
+
+    /**
+     * Test that deleteCollection returns API response
+     *
+     * @testdox Returns complete response from Qdrant API after deletion
+     */
+    public function testDeleteCollectionReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $fullResponse = [
+            'result' => true,
+            'status' => 'ok',
+            'time'   => 0.005678,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('DELETE', '/collections/my_vectors', null)
+            ->willReturn($fullResponse);
+
+        // Act
+        $result = $this->client->deleteCollection('my_vectors');
+
+        // Assert
+        $this->assertEquals($fullResponse, $result);
+    }
 }
