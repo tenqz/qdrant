@@ -579,4 +579,99 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertEquals($fullResponse, $result);
     }
+
+    // ========================================================================
+    // List Collections Tests
+    // ========================================================================
+
+    /**
+     * Test that listCollections retrieves all collections
+     *
+     * @testdox Lists all collections successfully
+     */
+    public function testListCollectionsSuccessfully(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'collections' => [
+                    ['name' => 'test_collection'],
+                    ['name' => 'prod_vectors'],
+                    ['name' => 'dev_embeddings'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->listCollections();
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that listCollections returns empty list when no collections exist
+     *
+     * @testdox Returns empty list when no collections exist
+     */
+    public function testListCollectionsReturnsEmptyList(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'collections' => [],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->listCollections();
+
+        // Assert
+        $this->assertEmpty($result['result']['collections']);
+    }
+
+    /**
+     * Test that listCollections returns correct structure
+     *
+     * @testdox Returns collections with correct structure
+     */
+    public function testListCollectionsReturnsCorrectStructure(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'collections' => [
+                    ['name' => 'collection_one'],
+                    ['name' => 'collection_two'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->listCollections();
+
+        // Assert
+        $this->assertCount(2, $result['result']['collections']);
+    }
 }
