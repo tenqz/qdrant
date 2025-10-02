@@ -60,13 +60,19 @@ class CurlHttpClient implements HttpClientInterface
      * @param string $method HTTP method
      * @param string $path API endpoint path
      * @param array|null $data Request body data
-     * @return resource cURL handle
+     * @return resource cURL handle (resource in PHP < 8.0, CurlHandle in PHP >= 8.0)
      * @throws SerializationException
+     * @throws NetworkException
+     * @phpstan-return resource|\CurlHandle
      */
     private function prepareCurlRequest(string $method, string $path, ?array $data)
     {
         $url = "{$this->baseUrl}{$path}";
         $ch = curl_init();
+
+        if ($ch === false) {
+            throw new NetworkException('Failed to initialize cURL session');
+        }
 
         $this->setCommonOptions($ch, $url, $method);
         $this->setHeaders($ch);
@@ -82,6 +88,7 @@ class CurlHttpClient implements HttpClientInterface
      * @param string $url Request URL
      * @param string $method HTTP method
      * @return void
+     * @phpstan-param resource|\CurlHandle $ch
      */
     private function setCommonOptions($ch, string $url, string $method): void
     {
@@ -96,6 +103,7 @@ class CurlHttpClient implements HttpClientInterface
      *
      * @param resource $ch cURL handle
      * @return void
+     * @phpstan-param resource|\CurlHandle $ch
      */
     private function setHeaders($ch): void
     {
@@ -119,6 +127,7 @@ class CurlHttpClient implements HttpClientInterface
      * @param array|null $data Request body data
      * @return void
      * @throws SerializationException
+     * @phpstan-param resource|\CurlHandle $ch
      */
     private function setBody($ch, string $method, ?array $data): void
     {
@@ -137,6 +146,7 @@ class CurlHttpClient implements HttpClientInterface
      *
      * @param resource $ch cURL handle
      * @return array [response, httpCode, error]
+     * @phpstan-param resource|\CurlHandle $ch
      */
     private function executeRequest($ch): array
     {
