@@ -126,4 +126,32 @@ class QdrantClient
     {
         return $this->request('GET', '/collections');
     }
+
+    // ========================================================================
+    // Points API
+    // ========================================================================
+
+    /**
+     * Upsert (insert or update) points into a collection
+     *
+     * Inserts new points or updates existing ones in the specified collection.
+     * Each point must have an id and vector, and can optionally include payload data.
+     *
+     * @param string $collection Collection name
+     * @param array $points Array of points with id, vector, and optional payload
+     * @return array Response from Qdrant API
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $points = [
+     *     ['id' => 1, 'vector' => [0.1, 0.2, 0.3], 'payload' => ['city' => 'Berlin']],
+     *     ['id' => 2, 'vector' => [0.4, 0.5, 0.6], 'payload' => ['city' => 'Moscow']],
+     * ];
+     */
+    public function upsertPoints(string $collection, array $points): array
+    {
+        return $this->request('PUT', "/collections/{$collection}/points", [
+            'points' => $points,
+        ]);
+    }
 }
