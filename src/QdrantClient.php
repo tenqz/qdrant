@@ -336,4 +336,57 @@ class QdrantClient
 
         return $this->request('POST', "/collections/{$collection}/points/count", $body);
     }
+
+    // ========================================================================
+    // Search API
+    // ========================================================================
+
+    /**
+     * Search for similar vectors
+     *
+     * Performs vector similarity search in the collection to find nearest neighbors.
+     * Returns points ranked by their similarity to the query vector.
+     *
+     * @param string $collection Collection name
+     * @param array $vector Query vector to search for similar vectors
+     * @param int $limit Maximum number of results to return (default: 10)
+     * @param array|null $filter Optional filter conditions to apply
+     * @param bool $withPayload Include payload data in response (default: true)
+     * @param bool $withVector Include vector data in response (default: false)
+     * @param float|null $scoreThreshold Minimum similarity score threshold
+     * @return array Search results with matched points and scores
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $results = $client->search('my_collection', [0.1, 0.2, 0.3], 10);
+     * foreach ($results['result'] as $point) {
+     *     echo "ID: {$point['id']}, Score: {$point['score']}\n";
+     * }
+     */
+    public function search(
+        string $collection,
+        array $vector,
+        int $limit = 10,
+        ?array $filter = null,
+        bool $withPayload = true,
+        bool $withVector = false,
+        ?float $scoreThreshold = null
+    ): array {
+        $body = [
+            'vector'       => $vector,
+            'limit'        => $limit,
+            'with_payload' => $withPayload,
+            'with_vector'  => $withVector,
+        ];
+
+        if ($filter !== null) {
+            $body['filter'] = $filter;
+        }
+
+        if ($scoreThreshold !== null) {
+            $body['score_threshold'] = $scoreThreshold;
+        }
+
+        return $this->request('POST', "/collections/{$collection}/points/search", $body);
+    }
 }
