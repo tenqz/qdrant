@@ -780,4 +780,106 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertCount(3, $points);
     }
+
+    // ========================================================================
+    // Get Point Tests
+    // ========================================================================
+
+    /**
+     * Test that getPoint retrieves point by integer ID
+     *
+     * @testdox Gets point by integer ID successfully
+     */
+    public function testGetPointByIntegerId(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'id'      => 1,
+                'version' => 0,
+                'vector'  => [0.1, 0.2, 0.3, 0.4],
+                'payload' => ['city' => 'Berlin', 'category' => 'A'],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections/test_collection/points/1', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoint('test_collection', 1);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoint retrieves point by string ID
+     *
+     * @testdox Gets point by string ID successfully
+     */
+    public function testGetPointByStringId(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'id'      => 'uuid-123-456',
+                'version' => 5,
+                'vector'  => [0.5, 0.6, 0.7],
+                'payload' => ['name' => 'Document A'],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections/my_vectors/points/uuid-123-456', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoint('my_vectors', 'uuid-123-456');
+
+        // Assert
+        $this->assertEquals('uuid-123-456', $result['result']['id']);
+    }
+
+    /**
+     * Test that getPoint returns complete point data
+     *
+     * @testdox Returns complete point data with all fields
+     */
+    public function testGetPointReturnsCompleteData(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'id'      => 42,
+                'version' => 10,
+                'vector'  => [0.1, 0.2, 0.3, 0.4, 0.5],
+                'payload' => [
+                    'title'      => 'Sample Document',
+                    'category'   => 'Technology',
+                    'tags'       => ['ai', 'ml', 'vectors'],
+                    'created_at' => '2024-01-01',
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', '/collections/documents/points/42', null)
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoint('documents', 42);
+
+        // Assert
+        $this->assertArrayHasKey('payload', $result['result']);
+    }
 }
