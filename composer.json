@@ -1,20 +1,33 @@
 {
     "name": "tenqz/qdrant",
-    "description": "A powerful PHP library for seamless integration with the Qdrant vector database. Designed to provide an easy-to-use interface for storing, managing, and querying vector data in your PHP applications.",
+    "description": "Simple PHP client for Qdrant vector database. Easy-to-use library for storing, searching, and managing vector embeddings in AI and machine learning applications.",
     "type": "library",
     "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Tenqz\\Qdrant\\": "src/"
-        }
-    },
+    "keywords": [
+        "qdrant",
+        "vector",
+        "database",
+        "embeddings",
+        "similarity",
+        "search",
+        "ai",
+        "machine-learning",
+        "vector-database",
+        "semantic-search"
+    ],
+    "homepage": "https://github.com/tenqz/qdrant",
+    "readme": "README.md",
     "authors": [
         {
             "name": "Oleg Patsay",
-            "email": "smmartbiz@gmail.com"
+            "email": "smmartbiz@gmail.com",
+            "role": "Developer"
         }
     ],
-    "minimum-stability": "alpha",
+    "support": {
+        "issues": "https://github.com/tenqz/qdrant/issues",
+        "source": "https://github.com/tenqz/qdrant"
+    },
     "require": {
         "php": "^7.2|^8.0",
         "ext-curl": "*",
@@ -25,6 +38,16 @@
         "friendsofphp/php-cs-fixer": "^3.0",
         "phpunit/phpunit": "^8.0|^9.0",
         "phpstan/phpstan": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tenqz\\Qdrant\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tenqz\\Qdrant\\Tests\\": "tests/"
+        }
     },
     "scripts": {
         "cs-check": "phpcs",
@@ -43,5 +66,35 @@
             "@analyze",
             "@phpunit"
         ]
-    }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "preferred-install": "dist"
+    },
+    "archive": {
+        "exclude": [
+            "/tests",
+            "/examples",
+            "/.github",
+            "/.gitignore",
+            "/.gitattributes",
+            "/.editorconfig",
+            "/phpunit.xml",
+            "/phpunit.xml.dist",
+            "/phpcs.xml",
+            "/phpcs.xml.dist",
+            "/.php-cs-fixer.php",
+            "/.php-cs-fixer.dist.php",
+            "/phpstan.neon",
+            "/phpstan.neon.dist",
+            "/.scrutinizer.yml",
+            "/.travis.yml",
+            "/CONTRIBUTING.md",
+            "/CHANGELOG.md",
+            "/docs"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
