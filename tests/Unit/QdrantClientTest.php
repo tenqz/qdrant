@@ -882,4 +882,407 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertArrayHasKey('payload', $result['result']);
     }
+
+    // ========================================================================
+    // Get Multiple Points Tests
+    // ========================================================================
+
+    /**
+     * Test that getPoints retrieves multiple points with default parameters
+     *
+     * @testdox Gets multiple points with payload included and vector excluded by default
+     */
+    public function testGetMultiplePointsWithDefaultParameters(): void
+    {
+        // Arrange
+        $ids = [1, 2, 3];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 1,
+                    'version' => 0,
+                    'payload' => ['city' => 'Berlin'],
+                ],
+                [
+                    'id'      => 2,
+                    'version' => 0,
+                    'payload' => ['city' => 'Moscow'],
+                ],
+                [
+                    'id'      => 3,
+                    'version' => 0,
+                    'payload' => ['city' => 'London'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('test_collection', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoints retrieves multiple points with vectors included
+     *
+     * @testdox Gets multiple points with vectors when withVector is true
+     */
+    public function testGetMultiplePointsWithVectors(): void
+    {
+        // Arrange
+        $ids = [10, 20];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 10,
+                    'version' => 5,
+                    'vector'  => [0.1, 0.2, 0.3, 0.4],
+                    'payload' => ['category' => 'A'],
+                ],
+                [
+                    'id'      => 20,
+                    'version' => 3,
+                    'vector'  => [0.5, 0.6, 0.7, 0.8],
+                    'payload' => ['category' => 'B'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_vectors/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => true,
+                    'with_vector'  => true,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('my_vectors', $ids, true, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoints retrieves multiple points without payload
+     *
+     * @testdox Gets multiple points without payload when withPayload is false
+     */
+    public function testGetMultiplePointsWithoutPayload(): void
+    {
+        // Arrange
+        $ids = [100, 200, 300];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 100,
+                    'version' => 1,
+                ],
+                [
+                    'id'      => 200,
+                    'version' => 2,
+                ],
+                [
+                    'id'      => 300,
+                    'version' => 3,
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000987,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => false,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('vectors', $ids, false, false);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoints retrieves multiple points with only vectors (no payload)
+     *
+     * @testdox Gets multiple points with vectors only when payload is excluded
+     */
+    public function testGetMultiplePointsWithVectorsOnly(): void
+    {
+        // Arrange
+        $ids = [5, 10, 15];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 5,
+                    'version' => 0,
+                    'vector'  => [0.1, 0.2, 0.3],
+                ],
+                [
+                    'id'      => 10,
+                    'version' => 0,
+                    'vector'  => [0.4, 0.5, 0.6],
+                ],
+                [
+                    'id'      => 15,
+                    'version' => 0,
+                    'vector'  => [0.7, 0.8, 0.9],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/embeddings/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => false,
+                    'with_vector'  => true,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('embeddings', $ids, false, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoints works with string IDs
+     *
+     * @testdox Gets multiple points using string IDs (UUIDs)
+     */
+    public function testGetMultiplePointsWithStringIds(): void
+    {
+        // Arrange
+        $ids = ['uuid-123', 'uuid-456', 'uuid-789'];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 'uuid-123',
+                    'version' => 2,
+                    'payload' => ['name' => 'Document A'],
+                ],
+                [
+                    'id'      => 'uuid-456',
+                    'version' => 4,
+                    'payload' => ['name' => 'Document B'],
+                ],
+                [
+                    'id'      => 'uuid-789',
+                    'version' => 1,
+                    'payload' => ['name' => 'Document C'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('documents', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoints works with mixed integer and string IDs
+     *
+     * @testdox Gets multiple points with mixed ID types
+     */
+    public function testGetMultiplePointsWithMixedIds(): void
+    {
+        // Arrange
+        $ids = [1, 'uuid-456', 999];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 1,
+                    'version' => 0,
+                    'payload' => ['type' => 'numeric'],
+                ],
+                [
+                    'id'      => 'uuid-456',
+                    'version' => 5,
+                    'payload' => ['type' => 'string'],
+                ],
+                [
+                    'id'      => 999,
+                    'version' => 2,
+                    'payload' => ['type' => 'numeric'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/mixed_collection/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('mixed_collection', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoints works with single ID in array
+     *
+     * @testdox Gets points when only one ID is provided in array
+     */
+    public function testGetMultiplePointsWithSingleId(): void
+    {
+        // Arrange
+        $ids = [42];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 42,
+                    'version' => 10,
+                    'payload' => ['status' => 'active'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.000456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('test_collection', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that getPoints returns complete response with all metadata
+     *
+     * @testdox Returns complete API response with status and timing information
+     */
+    public function testGetMultiplePointsReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $ids = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 1,
+                    'version' => 3,
+                    'vector'  => [0.1, 0.2, 0.3, 0.4, 0.5],
+                    'payload' => [
+                        'title'      => 'First Document',
+                        'category'   => 'Tech',
+                        'tags'       => ['ai', 'ml'],
+                        'created_at' => '2024-01-01',
+                    ],
+                ],
+                [
+                    'id'      => 2,
+                    'version' => 7,
+                    'vector'  => [0.6, 0.7, 0.8, 0.9, 1.0],
+                    'payload' => [
+                        'title'      => 'Second Document',
+                        'category'   => 'Science',
+                        'tags'       => ['physics', 'research'],
+                        'created_at' => '2024-01-02',
+                    ],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/full_collection/points',
+                [
+                    'ids'          => $ids,
+                    'with_payload' => true,
+                    'with_vector'  => true,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->getPoints('full_collection', $ids, true, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
 }
