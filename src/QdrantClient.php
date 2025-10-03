@@ -154,4 +154,20 @@ class QdrantClient
             'points' => $points,
         ]);
     }
+
+    /**
+     * Get a single point by ID
+     *
+     * Retrieves a specific point from the collection by its ID.
+     * Returns the point's vector, payload, and metadata.
+     *
+     * @param string $collection Collection name
+     * @param int|string $id Point ID
+     * @return array Point data from Qdrant API
+     * @throws TransportException On network or API errors
+     */
+    public function getPoint(string $collection, $id): array
+    {
+        return $this->request('GET', "/collections/{$collection}/points/{$id}");
+    }
 }
