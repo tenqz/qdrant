@@ -1964,4 +1964,388 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertArrayHasKey('result', $result);
     }
+
+    // ========================================================================
+    // Delete Payload Tests
+    // ========================================================================
+
+    /**
+     * Test that deletePayload removes payload keys successfully
+     *
+     * @testdox Deletes payload keys from multiple points successfully
+     */
+    public function testDeletePayloadFromMultiplePointsSuccessfully(): void
+    {
+        // Arrange
+        $keys = ['old_field', 'temp_data'];
+        $points = [1, 2, 3];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 0,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('test_collection', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload works with string IDs
+     *
+     * @testdox Deletes payload keys from points with string IDs (UUIDs)
+     */
+    public function testDeletePayloadWithStringIds(): void
+    {
+        // Arrange
+        $keys = ['category', 'tags'];
+        $points = ['uuid-123', 'uuid-456'];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 1,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('documents', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload works with mixed ID types
+     *
+     * @testdox Deletes payload keys from points with mixed integer and string IDs
+     */
+    public function testDeletePayloadWithMixedIds(): void
+    {
+        // Arrange
+        $keys = ['temp'];
+        $points = [1, 'uuid-456', 999];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 2,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/mixed_collection/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('mixed_collection', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload works with single point
+     *
+     * @testdox Deletes payload keys from single point
+     */
+    public function testDeletePayloadFromSinglePoint(): void
+    {
+        // Arrange
+        $keys = ['draft', 'preview'];
+        $points = [42];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 3,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.000987,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('test_collection', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload works with single key
+     *
+     * @testdox Deletes single payload key from multiple points
+     */
+    public function testDeletePayloadWithSingleKey(): void
+    {
+        // Arrange
+        $keys = ['deprecated_field'];
+        $points = [1, 2, 3, 4, 5];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 4,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('vectors', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload works with multiple keys
+     *
+     * @testdox Deletes multiple payload keys from points
+     */
+    public function testDeletePayloadWithMultipleKeys(): void
+    {
+        // Arrange
+        $keys = ['temp_field1', 'temp_field2', 'old_data', 'cache'];
+        $points = [10, 20];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 5,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/cleanup/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('cleanup', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload works with nested key paths
+     *
+     * @testdox Deletes nested payload keys using dot notation
+     */
+    public function testDeletePayloadWithNestedKeys(): void
+    {
+        // Arrange
+        $keys = ['metadata.temp', 'stats.cache'];
+        $points = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 6,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('documents', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload works with large batch of points
+     *
+     * @testdox Deletes payload keys from large batch of points
+     */
+    public function testDeletePayloadFromLargeBatch(): void
+    {
+        // Arrange
+        $keys = ['temp'];
+        $points = range(1, 100);
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 7,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.015678,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/large_collection/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('large_collection', $keys, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePayload returns operation status
+     *
+     * @testdox Returns operation status after deleting payload keys
+     */
+    public function testDeletePayloadReturnsOperationStatus(): void
+    {
+        // Arrange
+        $keys = ['old_field'];
+        $points = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 8,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('vectors', $keys, $points);
+
+        // Assert
+        $this->assertEquals('completed', $result['result']['status']);
+    }
+
+    /**
+     * Test that deletePayload returns complete API response
+     *
+     * @testdox Returns complete response with operation metadata
+     */
+    public function testDeletePayloadReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $keys = ['field1', 'field2'];
+        $points = [1];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 9,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/payload/delete',
+                [
+                    'keys'   => $keys,
+                    'points' => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePayload('my_collection', $keys, $points);
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
 }
