@@ -243,4 +243,27 @@ class QdrantClient
             'points'  => $points,
         ]);
     }
+
+    /**
+     * Delete payload keys from points
+     *
+     * Removes specific payload fields from multiple points in the collection.
+     * Only the specified keys are deleted, other payload data remains intact.
+     *
+     * @param string $collection Collection name
+     * @param array $keys Array of payload keys to delete
+     * @param array $points Array of point IDs to update
+     * @return array Response from Qdrant API with operation status
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $result = $client->deletePayload('my_collection', ['old_field', 'temp_data'], [1, 2, 3]);
+     */
+    public function deletePayload(string $collection, array $keys, array $points): array
+    {
+        return $this->request('POST', "/collections/{$collection}/points/payload/delete", [
+            'keys'   => $keys,
+            'points' => $points,
+        ]);
+    }
 }
