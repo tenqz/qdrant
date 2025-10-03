@@ -310,4 +310,30 @@ class QdrantClient
 
         return $this->request('POST', "/collections/{$collection}/points/scroll", $body);
     }
+
+    /**
+     * Count points in collection
+     *
+     * Returns the total number of points in the collection.
+     * Optionally applies filter conditions to count only matching points.
+     *
+     * @param string $collection Collection name
+     * @param array|null $filter Optional filter conditions to apply
+     * @return array Count result from Qdrant API
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $result = $client->countPoints('my_collection');
+     * $count = $result['result']['count'];
+     */
+    public function countPoints(string $collection, ?array $filter = null): array
+    {
+        $body = null;
+
+        if ($filter !== null) {
+            $body = ['filter' => $filter];
+        }
+
+        return $this->request('POST', "/collections/{$collection}/points/count", $body);
+    }
 }
