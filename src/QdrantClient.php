@@ -199,4 +199,25 @@ class QdrantClient
             'with_vector'  => $withVector,
         ]);
     }
+
+    /**
+     * Delete points by IDs
+     *
+     * Permanently removes multiple points from the collection by their IDs.
+     * This operation is atomic and cannot be undone.
+     *
+     * @param string $collection Collection name
+     * @param array $ids Array of point IDs to delete (integers or strings)
+     * @return array Response from Qdrant API with operation status
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $result = $client->deletePoints('my_collection', [1, 2, 3]);
+     */
+    public function deletePoints(string $collection, array $ids): array
+    {
+        return $this->request('POST', "/collections/{$collection}/points/delete", [
+            'points' => $ids,
+        ]);
+    }
 }
