@@ -220,4 +220,27 @@ class QdrantClient
             'points' => $ids,
         ]);
     }
+
+    /**
+     * Update payload for specific points
+     *
+     * Sets or updates payload data for multiple points in the collection.
+     * The payload is merged with existing data unless the point is new.
+     *
+     * @param string $collection Collection name
+     * @param array $payload Payload data to set (key-value pairs)
+     * @param array $points Array of point IDs to update
+     * @return array Response from Qdrant API with operation status
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $result = $client->setPayload('my_collection', ['category' => 'tech'], [1, 2, 3]);
+     */
+    public function setPayload(string $collection, array $payload, array $points): array
+    {
+        return $this->request('POST', "/collections/{$collection}/points/payload", [
+            'payload' => $payload,
+            'points'  => $points,
+        ]);
+    }
 }
