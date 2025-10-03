@@ -1561,4 +1561,407 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertArrayHasKey('result', $result);
     }
+
+    // ========================================================================
+    // Set Payload Tests
+    // ========================================================================
+
+    /**
+     * Test that setPayload updates payload for multiple points successfully
+     *
+     * @testdox Sets payload for multiple points successfully
+     */
+    public function testSetPayloadForMultiplePointsSuccessfully(): void
+    {
+        // Arrange
+        $payload = ['category' => 'tech', 'status' => 'active'];
+        $points = [1, 2, 3];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 0,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('test_collection', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload works with string IDs
+     *
+     * @testdox Sets payload for points with string IDs (UUIDs)
+     */
+    public function testSetPayloadWithStringIds(): void
+    {
+        // Arrange
+        $payload = ['name' => 'Document', 'type' => 'article'];
+        $points = ['uuid-123', 'uuid-456'];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 1,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('documents', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload works with mixed ID types
+     *
+     * @testdox Sets payload for points with mixed integer and string IDs
+     */
+    public function testSetPayloadWithMixedIds(): void
+    {
+        // Arrange
+        $payload = ['updated' => true];
+        $points = [1, 'uuid-456', 999];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 2,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/mixed_collection/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('mixed_collection', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload works with single point
+     *
+     * @testdox Sets payload for single point
+     */
+    public function testSetPayloadForSinglePoint(): void
+    {
+        // Arrange
+        $payload = ['status' => 'processed', 'score' => 0.95];
+        $points = [42];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 3,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.000987,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('test_collection', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload works with complex nested payload
+     *
+     * @testdox Sets complex nested payload successfully
+     */
+    public function testSetPayloadWithComplexNestedData(): void
+    {
+        // Arrange
+        $payload = [
+            'title'    => 'Advanced Document',
+            'metadata' => [
+                'author'  => 'John Doe',
+                'version' => 2,
+                'tags'    => ['ai', 'ml', 'nlp'],
+            ],
+            'stats' => [
+                'views'     => 1500,
+                'downloads' => 320,
+            ],
+        ];
+        $points = [10, 20];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 4,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('documents', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload works with empty payload
+     *
+     * @testdox Sets empty payload successfully
+     */
+    public function testSetPayloadWithEmptyPayload(): void
+    {
+        // Arrange
+        $payload = [];
+        $points = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 5,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('test_collection', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload works with boolean values in payload
+     *
+     * @testdox Sets payload with boolean values
+     */
+    public function testSetPayloadWithBooleanValues(): void
+    {
+        // Arrange
+        $payload = [
+            'is_active'   => true,
+            'is_verified' => false,
+            'is_premium'  => true,
+        ];
+        $points = [5, 10];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 6,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/users/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('users', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload works with numeric values in payload
+     *
+     * @testdox Sets payload with numeric values
+     */
+    public function testSetPayloadWithNumericValues(): void
+    {
+        // Arrange
+        $payload = [
+            'price'  => 29.99,
+            'rating' => 4.5,
+            'count'  => 150,
+        ];
+        $points = [100, 200];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 7,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/products/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('products', $payload, $points);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that setPayload returns operation status
+     *
+     * @testdox Returns operation status after setting payload
+     */
+    public function testSetPayloadReturnsOperationStatus(): void
+    {
+        // Arrange
+        $payload = ['updated_at' => '2024-01-01'];
+        $points = [1, 2, 3];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 8,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('vectors', $payload, $points);
+
+        // Assert
+        $this->assertEquals('completed', $result['result']['status']);
+    }
+
+    /**
+     * Test that setPayload returns complete API response
+     *
+     * @testdox Returns complete response with all metadata
+     */
+    public function testSetPayloadReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $payload = ['field' => 'value'];
+        $points = [1];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 9,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/payload',
+                [
+                    'payload' => $payload,
+                    'points'  => $points,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->setPayload('my_collection', $payload, $points);
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
 }
