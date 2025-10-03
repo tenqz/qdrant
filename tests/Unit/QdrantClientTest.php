@@ -4394,4 +4394,573 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertEquals($expectedResponse, $result);
     }
+
+    // ========================================================================
+    // Batch Search Tests
+    // ========================================================================
+
+    /**
+     * Test that searchBatch performs multiple searches at once
+     *
+     * @testdox Performs batch search with multiple vectors
+     */
+    public function testSearchBatchWithMultipleSearches(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => [0.1, 0.2, 0.3], 'limit' => 5],
+            ['vector' => [0.4, 0.5, 0.6], 'limit' => 3],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    ['id' => 1, 'score' => 0.95, 'payload' => ['type' => 'A']],
+                    ['id' => 2, 'score' => 0.88, 'payload' => ['type' => 'A']],
+                ],
+                [
+                    ['id' => 10, 'score' => 0.92, 'payload' => ['type' => 'B']],
+                    ['id' => 11, 'score' => 0.85, 'payload' => ['type' => 'B']],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.005678,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('test_collection', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch works with single search
+     *
+     * @testdox Performs batch search with single vector
+     */
+    public function testSearchBatchWithSingleSearch(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => [0.1, 0.2, 0.3], 'limit' => 10],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    ['id' => 1, 'score' => 0.97],
+                    ['id' => 2, 'score' => 0.89],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('vectors', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch works with different parameters per search
+     *
+     * @testdox Performs batch search with varied parameters
+     */
+    public function testSearchBatchWithDifferentParameters(): void
+    {
+        // Arrange
+        $searches = [
+            [
+                'vector'       => [0.1, 0.2, 0.3],
+                'limit'        => 5,
+                'with_payload' => true,
+                'with_vector'  => false,
+            ],
+            [
+                'vector'       => [0.4, 0.5, 0.6],
+                'limit'        => 3,
+                'with_payload' => false,
+                'with_vector'  => true,
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    ['id' => 1, 'score' => 0.95, 'payload' => ['data' => 'first']],
+                ],
+                [
+                    ['id' => 10, 'score' => 0.92, 'vector' => [0.41, 0.51, 0.61]],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.004567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('test_collection', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch works with filters
+     *
+     * @testdox Performs batch search with filters per search
+     */
+    public function testSearchBatchWithFilters(): void
+    {
+        // Arrange
+        $searches = [
+            [
+                'vector' => [0.1, 0.2, 0.3],
+                'limit'  => 5,
+                'filter' => ['must' => [['key' => 'city', 'match' => ['value' => 'Berlin']]]],
+            ],
+            [
+                'vector' => [0.4, 0.5, 0.6],
+                'limit'  => 3,
+                'filter' => ['must' => [['key' => 'city', 'match' => ['value' => 'Moscow']]]],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    ['id' => 1, 'score' => 0.95, 'payload' => ['city' => 'Berlin']],
+                ],
+                [
+                    ['id' => 10, 'score' => 0.90, 'payload' => ['city' => 'Moscow']],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.006789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('test_collection', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch works with score thresholds
+     *
+     * @testdox Performs batch search with score thresholds
+     */
+    public function testSearchBatchWithScoreThresholds(): void
+    {
+        // Arrange
+        $searches = [
+            [
+                'vector'          => [0.1, 0.2, 0.3],
+                'limit'           => 5,
+                'score_threshold' => 0.9,
+            ],
+            [
+                'vector'          => [0.4, 0.5, 0.6],
+                'limit'           => 3,
+                'score_threshold' => 0.85,
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    ['id' => 1, 'score' => 0.95],
+                    ['id' => 2, 'score' => 0.92],
+                ],
+                [
+                    ['id' => 10, 'score' => 0.88],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('test_collection', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch returns multiple result sets
+     *
+     * @testdox Returns multiple result sets matching number of searches
+     */
+    public function testSearchBatchReturnsMultipleResults(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => [0.1, 0.2], 'limit' => 2],
+            ['vector' => [0.3, 0.4], 'limit' => 2],
+            ['vector' => [0.5, 0.6], 'limit' => 2],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [['id' => 1, 'score' => 0.95]],
+                [['id' => 2, 'score' => 0.90]],
+                [['id' => 3, 'score' => 0.85]],
+            ],
+            'status' => 'ok',
+            'time'   => 0.004567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('vectors', $searches);
+
+        // Assert
+        $this->assertCount(3, $result['result']);
+    }
+
+    /**
+     * Test that searchBatch works with empty results
+     *
+     * @testdox Returns empty results when no matches found
+     */
+    public function testSearchBatchReturnsEmptyResults(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => [0.9, 0.9, 0.9], 'limit' => 5, 'score_threshold' => 0.99],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('test_collection', $searches);
+
+        // Assert
+        $this->assertEmpty($result['result'][0]);
+    }
+
+    /**
+     * Test that searchBatch works with high-dimensional vectors
+     *
+     * @testdox Performs batch search with high-dimensional vectors
+     */
+    public function testSearchBatchWithHighDimensionalVectors(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => array_fill(0, 768, 0.1), 'limit' => 3],
+            ['vector' => array_fill(0, 768, 0.2), 'limit' => 3],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    ['id' => 1, 'score' => 0.92],
+                ],
+                [
+                    ['id' => 10, 'score' => 0.88],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.008901,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/bert_embeddings/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('bert_embeddings', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch works with different collection names
+     *
+     * @testdox Performs batch search in specific collection
+     */
+    public function testSearchBatchInSpecificCollection(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => [0.1, 0.2, 0.3], 'limit' => 5],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [['id' => 1, 'score' => 0.89]],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/production_vectors/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('production_vectors', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch returns complete API response
+     *
+     * @testdox Returns complete response with all metadata
+     */
+    public function testSearchBatchReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => [0.1, 0.2, 0.3], 'limit' => 5],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    ['id' => 1, 'score' => 0.95, 'payload' => ['data' => 'test']],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('my_collection', $searches);
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
+
+    /**
+     * Test that searchBatch works with large batch of searches
+     *
+     * @testdox Performs large batch of multiple searches
+     */
+    public function testSearchBatchWithLargeBatch(): void
+    {
+        // Arrange
+        $searches = [];
+        for ($i = 0; $i < 10; $i++) {
+            $searches[] = ['vector' => [0.1 * $i, 0.2 * $i, 0.3 * $i], 'limit' => 2];
+        }
+
+        $expectedResults = [];
+        for ($i = 0; $i < 10; $i++) {
+            $expectedResults[] = [['id' => $i, 'score' => 0.9 - ($i * 0.01)]];
+        }
+
+        $expectedResponse = [
+            'result' => $expectedResults,
+            'status' => 'ok',
+            'time'   => 0.015678,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('test_collection', $searches);
+
+        // Assert
+        $this->assertCount(10, $result['result']);
+    }
+
+    /**
+     * Test that searchBatch works with mixed search configurations
+     *
+     * @testdox Performs batch search with completely different configurations
+     */
+    public function testSearchBatchWithMixedConfigurations(): void
+    {
+        // Arrange
+        $searches = [
+            [
+                'vector'          => [0.1, 0.2, 0.3],
+                'limit'           => 5,
+                'with_payload'    => true,
+                'with_vector'     => false,
+                'score_threshold' => 0.9,
+            ],
+            [
+                'vector'       => [0.4, 0.5, 0.6],
+                'limit'        => 3,
+                'with_payload' => false,
+                'with_vector'  => true,
+                'filter'       => ['must' => [['key' => 'type', 'match' => ['value' => 'premium']]]],
+            ],
+            [
+                'vector'       => [0.7, 0.8, 0.9],
+                'limit'        => 10,
+                'with_payload' => true,
+                'with_vector'  => true,
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [['id' => 1, 'score' => 0.95, 'payload' => ['type' => 'standard']]],
+                [['id' => 10, 'score' => 0.88, 'vector' => [0.41, 0.51, 0.61]]],
+                [['id' => 20, 'score' => 0.85, 'vector' => [0.71, 0.81, 0.91], 'payload' => ['type' => 'advanced']]],
+            ],
+            'status' => 'ok',
+            'time'   => 0.007890,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('test_collection', $searches);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that searchBatch preserves search order
+     *
+     * @testdox Returns results in same order as searches
+     */
+    public function testSearchBatchPreservesSearchOrder(): void
+    {
+        // Arrange
+        $searches = [
+            ['vector' => [0.1, 0.2], 'limit' => 1],
+            ['vector' => [0.3, 0.4], 'limit' => 1],
+            ['vector' => [0.5, 0.6], 'limit' => 1],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [['id' => 1, 'score' => 0.95]],
+                [['id' => 2, 'score' => 0.90]],
+                [['id' => 3, 'score' => 0.85]],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/search/batch',
+                ['searches' => $searches]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->searchBatch('vectors', $searches);
+
+        // Assert
+        $this->assertEquals(1, $result['result'][0][0]['id']);
+    }
 }
