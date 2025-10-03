@@ -435,4 +435,32 @@ class QdrantClient
 
         return $this->request('POST', "/collections/{$collection}/points/recommend", $body);
     }
+
+    /**
+     * Search with multiple vectors (batch search)
+     *
+     * Performs multiple vector similarity searches in a single request for improved performance.
+     * Each search can have its own vector, limit, filter, and other parameters.
+     *
+     * @param string $collection Collection name
+     * @param array $searches Array of search request configurations
+     * @return array Batch search results with multiple result sets
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $searches = [
+     *     ['vector' => [0.1, 0.2, 0.3], 'limit' => 5],
+     *     ['vector' => [0.4, 0.5, 0.6], 'limit' => 3, 'filter' => ['must' => [...]]],
+     * ];
+     * $results = $client->searchBatch('my_collection', $searches);
+     * foreach ($results['result'] as $idx => $searchResult) {
+     *     echo "Search {$idx} found " . count($searchResult) . " results\n";
+     * }
+     */
+    public function searchBatch(string $collection, array $searches): array
+    {
+        return $this->request('POST', "/collections/{$collection}/points/search/batch", [
+            'searches' => $searches,
+        ]);
+    }
 }
