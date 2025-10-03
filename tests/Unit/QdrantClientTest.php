@@ -2762,4 +2762,377 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertArrayHasKey('result', $result);
     }
+
+    // ========================================================================
+    // Count Points Tests
+    // ========================================================================
+
+    /**
+     * Test that countPoints returns total count without filter
+     *
+     * @testdox Counts all points in collection without filter
+     */
+    public function testCountPointsWithoutFilter(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'count' => 1500,
+            ],
+            'status' => 'ok',
+            'time'   => 0.000234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/count',
+                null
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('test_collection');
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that countPoints returns count with filter applied
+     *
+     * @testdox Counts points matching filter criteria
+     */
+    public function testCountPointsWithFilter(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                ['key' => 'city', 'match' => ['value' => 'Berlin']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'count' => 250,
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/count',
+                ['filter' => $filter]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('test_collection', $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that countPoints works with complex filter
+     *
+     * @testdox Counts points with complex filter conditions
+     */
+    public function testCountPointsWithComplexFilter(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                ['key' => 'category', 'match' => ['value' => 'tech']],
+                ['key' => 'status', 'match' => ['value' => 'active']],
+            ],
+            'should' => [
+                ['key' => 'priority', 'match' => ['value' => 'high']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'count' => 42,
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/count',
+                ['filter' => $filter]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('documents', $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that countPoints returns zero for empty collection
+     *
+     * @testdox Returns zero count for empty collection
+     */
+    public function testCountPointsReturnsZeroForEmptyCollection(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'count' => 0,
+            ],
+            'status' => 'ok',
+            'time'   => 0.000123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/empty_collection/points/count',
+                null
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('empty_collection');
+
+        // Assert
+        $this->assertEquals(0, $result['result']['count']);
+    }
+
+    /**
+     * Test that countPoints returns zero when filter matches nothing
+     *
+     * @testdox Returns zero count when no points match filter
+     */
+    public function testCountPointsReturnsZeroWithNoMatches(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                ['key' => 'nonexistent', 'match' => ['value' => 'test']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'count' => 0,
+            ],
+            'status' => 'ok',
+            'time'   => 0.000456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/count',
+                ['filter' => $filter]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('test_collection', $filter);
+
+        // Assert
+        $this->assertEquals(0, $result['result']['count']);
+    }
+
+    /**
+     * Test that countPoints works with different collection names
+     *
+     * @testdox Counts points from specific collection
+     */
+    public function testCountPointsFromSpecificCollection(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'count' => 5000,
+            ],
+            'status' => 'ok',
+            'time'   => 0.000789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/production_vectors/points/count',
+                null
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('production_vectors');
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that countPoints returns count value from result
+     *
+     * @testdox Returns count value in result field
+     */
+    public function testCountPointsReturnsCountValue(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'count' => 999,
+            ],
+            'status' => 'ok',
+            'time'   => 0.000567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/count',
+                null
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('vectors');
+
+        // Assert
+        $this->assertArrayHasKey('count', $result['result']);
+    }
+
+    /**
+     * Test that countPoints returns complete API response
+     *
+     * @testdox Returns complete response with all metadata
+     */
+    public function testCountPointsReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'count' => 12345,
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/count',
+                null
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('my_collection');
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that countPoints works with range filter
+     *
+     * @testdox Counts points with range filter conditions
+     */
+    public function testCountPointsWithRangeFilter(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                [
+                    'key'   => 'price',
+                    'range' => [
+                        'gte' => 10,
+                        'lte' => 100,
+                    ],
+                ],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'count' => 150,
+            ],
+            'status' => 'ok',
+            'time'   => 0.001567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/products/points/count',
+                ['filter' => $filter]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('products', $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that countPoints works with geo filter
+     *
+     * @testdox Counts points with geo filter conditions
+     */
+    public function testCountPointsWithGeoFilter(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                [
+                    'key'        => 'location',
+                    'geo_radius' => [
+                        'center' => [
+                            'lon' => 13.404954,
+                            'lat' => 52.520008,
+                        ],
+                        'radius' => 1000,
+                    ],
+                ],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'count' => 75,
+            ],
+            'status' => 'ok',
+            'time'   => 0.002123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/locations/points/count',
+                ['filter' => $filter]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->countPoints('locations', $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
 }
