@@ -2348,4 +2348,418 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertArrayHasKey('result', $result);
     }
+
+    // ========================================================================
+    // Scroll Points Tests
+    // ========================================================================
+
+    /**
+     * Test that scroll retrieves points with default parameters
+     *
+     * @testdox Scrolls through points with default limit and payload included
+     */
+    public function testScrollPointsWithDefaultParameters(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'points' => [
+                    ['id' => 1, 'payload' => ['city' => 'Berlin']],
+                    ['id' => 2, 'payload' => ['city' => 'Moscow']],
+                ],
+                'next_page_offset' => 'offset_123',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('test_collection');
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that scroll works with custom limit
+     *
+     * @testdox Scrolls through points with custom limit
+     */
+    public function testScrollPointsWithCustomLimit(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'points'           => [['id' => 1], ['id' => 2]],
+                'next_page_offset' => 'offset_456',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/scroll',
+                [
+                    'limit'        => 50,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('vectors', 50);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that scroll works with pagination offset
+     *
+     * @testdox Scrolls through points using pagination offset
+     */
+    public function testScrollPointsWithOffset(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'points'           => [['id' => 3], ['id' => 4]],
+                'next_page_offset' => 'offset_789',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                    'offset'       => 'offset_123',
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('documents', 100, null, 'offset_123');
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that scroll works with filter
+     *
+     * @testdox Scrolls through points with filter applied
+     */
+    public function testScrollPointsWithFilter(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                ['key' => 'city', 'match' => ['value' => 'Berlin']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'points'           => [['id' => 1, 'payload' => ['city' => 'Berlin']]],
+                'next_page_offset' => null,
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                    'filter'       => $filter,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('test_collection', 100, $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that scroll works with vectors included
+     *
+     * @testdox Scrolls through points with vectors included
+     */
+    public function testScrollPointsWithVectors(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'points' => [
+                    [
+                        'id'      => 1,
+                        'vector'  => [0.1, 0.2, 0.3],
+                        'payload' => ['city' => 'Berlin'],
+                    ],
+                ],
+                'next_page_offset' => 'offset_abc',
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/embeddings/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => true,
+                    'with_vector'  => true,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('embeddings', 100, null, null, true, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that scroll works without payload
+     *
+     * @testdox Scrolls through points without payload
+     */
+    public function testScrollPointsWithoutPayload(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'points'           => [['id' => 1], ['id' => 2], ['id' => 3]],
+                'next_page_offset' => 'offset_def',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => false,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('vectors', 100, null, null, false);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that scroll works with all parameters
+     *
+     * @testdox Scrolls through points with all parameters specified
+     */
+    public function testScrollPointsWithAllParameters(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                ['key' => 'category', 'match' => ['value' => 'tech']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'points' => [
+                    [
+                        'id'      => 10,
+                        'vector'  => [0.1, 0.2, 0.3, 0.4],
+                        'payload' => ['category' => 'tech'],
+                    ],
+                ],
+                'next_page_offset' => 'offset_xyz',
+            ],
+            'status' => 'ok',
+            'time'   => 0.004567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/full_collection/points/scroll',
+                [
+                    'limit'        => 25,
+                    'with_payload' => true,
+                    'with_vector'  => true,
+                    'filter'       => $filter,
+                    'offset'       => 'prev_offset',
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('full_collection', 25, $filter, 'prev_offset', true, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that scroll returns null next_page_offset when no more pages
+     *
+     * @testdox Returns null next_page_offset when pagination is complete
+     */
+    public function testScrollReturnsNullOffsetWhenComplete(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'points'           => [['id' => 100]],
+                'next_page_offset' => null,
+            ],
+            'status' => 'ok',
+            'time'   => 0.000987,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/small_collection/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('small_collection');
+
+        // Assert
+        $this->assertNull($result['result']['next_page_offset']);
+    }
+
+    /**
+     * Test that scroll works with empty result
+     *
+     * @testdox Returns empty points array when no matches found
+     */
+    public function testScrollReturnsEmptyPoints(): void
+    {
+        // Arrange
+        $filter = [
+            'must' => [
+                ['key' => 'nonexistent', 'match' => ['value' => 'test']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                'points'           => [],
+                'next_page_offset' => null,
+            ],
+            'status' => 'ok',
+            'time'   => 0.000456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                    'filter'       => $filter,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('test_collection', 100, $filter);
+
+        // Assert
+        $this->assertEmpty($result['result']['points']);
+    }
+
+    /**
+     * Test that scroll returns complete API response
+     *
+     * @testdox Returns complete response with all metadata
+     */
+    public function testScrollReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $expectedResponse = [
+            'result' => [
+                'points' => [
+                    ['id' => 1, 'payload' => ['data' => 'test']],
+                ],
+                'next_page_offset' => 'next',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/scroll',
+                [
+                    'limit'        => 100,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->scroll('my_collection');
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
 }
