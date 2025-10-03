@@ -266,4 +266,48 @@ class QdrantClient
             'points' => $points,
         ]);
     }
+
+    /**
+     * Scroll through all points in a collection
+     *
+     * Retrieves points from the collection in batches with cursor-based pagination.
+     * Useful for iterating through large collections without loading all data at once.
+     *
+     * @param string $collection Collection name
+     * @param int $limit Maximum number of points to return per request (default: 100)
+     * @param array|null $filter Optional filter conditions to apply
+     * @param string|null $offset Pagination offset from previous scroll response
+     * @param bool $withPayload Include payload data in response (default: true)
+     * @param bool $withVector Include vector data in response (default: false)
+     * @return array Response with points array and next_page_offset for pagination
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $result = $client->scroll('my_collection', 50);
+     * $nextOffset = $result['result']['next_page_offset'] ?? null;
+     */
+    public function scroll(
+        string $collection,
+        int $limit = 100,
+        ?array $filter = null,
+        ?string $offset = null,
+        bool $withPayload = true,
+        bool $withVector = false
+    ): array {
+        $body = [
+            'limit'        => $limit,
+            'with_payload' => $withPayload,
+            'with_vector'  => $withVector,
+        ];
+
+        if ($filter !== null) {
+            $body['filter'] = $filter;
+        }
+
+        if ($offset !== null) {
+            $body['offset'] = $offset;
+        }
+
+        return $this->request('POST', "/collections/{$collection}/points/scroll", $body);
+    }
 }
