@@ -3135,4 +3135,603 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertEquals($expectedResponse, $result);
     }
+
+    // ========================================================================
+    // Search Tests
+    // ========================================================================
+
+    /**
+     * Test that search performs vector similarity search with default parameters
+     *
+     * @testdox Searches for similar vectors with default parameters
+     */
+    public function testSearchWithDefaultParameters(): void
+    {
+        // Arrange
+        $vector = [0.1, 0.2, 0.3, 0.4];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 1,
+                    'score'   => 0.95,
+                    'payload' => ['city' => 'Berlin'],
+                ],
+                [
+                    'id'      => 2,
+                    'score'   => 0.87,
+                    'payload' => ['city' => 'Moscow'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('test_collection', $vector);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works with custom limit
+     *
+     * @testdox Searches with custom result limit
+     */
+    public function testSearchWithCustomLimit(): void
+    {
+        // Arrange
+        $vector = [0.5, 0.6, 0.7];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 1, 'score' => 0.98],
+                ['id' => 2, 'score' => 0.92],
+                ['id' => 3, 'score' => 0.85],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 3,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('vectors', $vector, 3);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works with filter
+     *
+     * @testdox Searches with filter conditions applied
+     */
+    public function testSearchWithFilter(): void
+    {
+        // Arrange
+        $vector = [0.1, 0.2, 0.3];
+        $filter = [
+            'must' => [
+                ['key' => 'city', 'match' => ['value' => 'Berlin']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 1,
+                    'score'   => 0.95,
+                    'payload' => ['city' => 'Berlin'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                    'filter'       => $filter,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('test_collection', $vector, 10, $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works with vectors included
+     *
+     * @testdox Searches with vectors included in response
+     */
+    public function testSearchWithVectors(): void
+    {
+        // Arrange
+        $vector = [0.1, 0.2, 0.3, 0.4, 0.5];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 10,
+                    'score'   => 0.99,
+                    'vector'  => [0.11, 0.21, 0.31, 0.41, 0.51],
+                    'payload' => ['category' => 'tech'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.004567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/embeddings/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => true,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('embeddings', $vector, 10, null, true, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works without payload
+     *
+     * @testdox Searches without payload in response
+     */
+    public function testSearchWithoutPayload(): void
+    {
+        // Arrange
+        $vector = [0.7, 0.8, 0.9];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 1, 'score' => 0.95],
+                ['id' => 2, 'score' => 0.88],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => false,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('vectors', $vector, 10, null, false);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works with score threshold
+     *
+     * @testdox Searches with minimum score threshold
+     */
+    public function testSearchWithScoreThreshold(): void
+    {
+        // Arrange
+        $vector = [0.1, 0.2, 0.3];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 1, 'score' => 0.95, 'payload' => ['quality' => 'high']],
+                ['id' => 2, 'score' => 0.92, 'payload' => ['quality' => 'high']],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search',
+                [
+                    'vector'          => $vector,
+                    'limit'           => 10,
+                    'with_payload'    => true,
+                    'with_vector'     => false,
+                    'score_threshold' => 0.9,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('test_collection', $vector, 10, null, true, false, 0.9);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works with all parameters
+     *
+     * @testdox Searches with all parameters specified
+     */
+    public function testSearchWithAllParameters(): void
+    {
+        // Arrange
+        $vector = [0.1, 0.2, 0.3, 0.4];
+        $filter = [
+            'must' => [
+                ['key' => 'category', 'match' => ['value' => 'tech']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 5,
+                    'score'   => 0.97,
+                    'vector'  => [0.12, 0.22, 0.32, 0.42],
+                    'payload' => ['category' => 'tech', 'name' => 'Document 5'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.005678,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/full_search/points/search',
+                [
+                    'vector'          => $vector,
+                    'limit'           => 5,
+                    'with_payload'    => true,
+                    'with_vector'     => true,
+                    'filter'          => $filter,
+                    'score_threshold' => 0.95,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('full_search', $vector, 5, $filter, true, true, 0.95);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search returns empty results when no matches found
+     *
+     * @testdox Returns empty results when no similar vectors found
+     */
+    public function testSearchReturnsEmptyResults(): void
+    {
+        // Arrange
+        $vector = [0.9, 0.9, 0.9];
+        $expectedResponse = [
+            'result' => [],
+            'status' => 'ok',
+            'time'   => 0.000456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/search',
+                [
+                    'vector'          => $vector,
+                    'limit'           => 10,
+                    'with_payload'    => true,
+                    'with_vector'     => false,
+                    'score_threshold' => 0.99,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('test_collection', $vector, 10, null, true, false, 0.99);
+
+        // Assert
+        $this->assertEmpty($result['result']);
+    }
+
+    /**
+     * Test that search returns results sorted by score
+     *
+     * @testdox Returns search results with score values
+     */
+    public function testSearchReturnsResultsWithScores(): void
+    {
+        // Arrange
+        $vector = [0.5, 0.5, 0.5];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 1, 'score' => 0.95],
+                ['id' => 2, 'score' => 0.87],
+                ['id' => 3, 'score' => 0.75],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('vectors', $vector);
+
+        // Assert
+        $this->assertArrayHasKey('score', $result['result'][0]);
+    }
+
+    /**
+     * Test that search works with complex filter
+     *
+     * @testdox Searches with complex filter conditions
+     */
+    public function testSearchWithComplexFilter(): void
+    {
+        // Arrange
+        $vector = [0.1, 0.2, 0.3];
+        $filter = [
+            'must' => [
+                ['key' => 'category', 'match' => ['value' => 'tech']],
+                ['key' => 'status', 'match' => ['value' => 'active']],
+            ],
+            'should' => [
+                ['key' => 'priority', 'match' => ['value' => 'high']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 10,
+                    'score'   => 0.96,
+                    'payload' => ['category' => 'tech', 'status' => 'active'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                    'filter'       => $filter,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('documents', $vector, 10, $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works with different collection names
+     *
+     * @testdox Searches in specific collection
+     */
+    public function testSearchInSpecificCollection(): void
+    {
+        // Arrange
+        $vector = [0.3, 0.4, 0.5];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 1, 'score' => 0.89],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/production_vectors/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('production_vectors', $vector);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search returns complete API response
+     *
+     * @testdox Returns complete response with all metadata
+     */
+    public function testSearchReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $vector = [0.1, 0.2, 0.3];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 1,
+                    'score'   => 0.95,
+                    'payload' => ['data' => 'test'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('my_collection', $vector);
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
+
+    /**
+     * Test that search works with high-dimensional vectors
+     *
+     * @testdox Searches with high-dimensional vectors
+     */
+    public function testSearchWithHighDimensionalVectors(): void
+    {
+        // Arrange
+        $vector = array_fill(0, 768, 0.1);
+        $expectedResponse = [
+            'result' => [
+                ['id' => 1, 'score' => 0.92],
+            ],
+            'status' => 'ok',
+            'time'   => 0.004567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/bert_embeddings/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('bert_embeddings', $vector);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that search works with single result limit
+     *
+     * @testdox Searches with limit of 1 result
+     */
+    public function testSearchWithSingleResultLimit(): void
+    {
+        // Arrange
+        $vector = [0.5, 0.6];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 1, 'score' => 0.98, 'payload' => ['best' => 'match']],
+            ],
+            'status' => 'ok',
+            'time'   => 0.001123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/search',
+                [
+                    'vector'       => $vector,
+                    'limit'        => 1,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->search('vectors', $vector, 1);
+
+        // Assert
+        $this->assertCount(1, $result['result']);
+    }
 }
