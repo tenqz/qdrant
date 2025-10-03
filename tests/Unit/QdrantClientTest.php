@@ -1285,4 +1285,280 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertEquals($expectedResponse, $result);
     }
+
+    // ========================================================================
+    // Delete Multiple Points Tests
+    // ========================================================================
+
+    /**
+     * Test that deletePoints deletes multiple points successfully
+     *
+     * @testdox Deletes multiple points by IDs successfully
+     */
+    public function testDeleteMultiplePointsSuccessfully(): void
+    {
+        // Arrange
+        $ids = [1, 2, 3];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 0,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('test_collection', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePoints works with string IDs
+     *
+     * @testdox Deletes multiple points using string IDs (UUIDs)
+     */
+    public function testDeleteMultiplePointsWithStringIds(): void
+    {
+        // Arrange
+        $ids = ['uuid-123', 'uuid-456', 'uuid-789'];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 1,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('documents', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePoints works with mixed ID types
+     *
+     * @testdox Deletes multiple points with mixed integer and string IDs
+     */
+    public function testDeleteMultiplePointsWithMixedIds(): void
+    {
+        // Arrange
+        $ids = [1, 'uuid-456', 999];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 2,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/mixed_collection/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('mixed_collection', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePoints works with single ID
+     *
+     * @testdox Deletes single point when only one ID is provided
+     */
+    public function testDeleteMultiplePointsWithSingleId(): void
+    {
+        // Arrange
+        $ids = [42];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 3,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.000987,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('test_collection', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePoints works with large batch of IDs
+     *
+     * @testdox Deletes large batch of points successfully
+     */
+    public function testDeleteMultiplePointsWithLargeBatch(): void
+    {
+        // Arrange
+        $ids = range(1, 100);
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 4,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.015678,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/large_collection/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('large_collection', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePoints returns operation status
+     *
+     * @testdox Returns operation status after deletion
+     */
+    public function testDeleteMultiplePointsReturnsOperationStatus(): void
+    {
+        // Arrange
+        $ids = [10, 20, 30];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 5,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.002456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('vectors', $ids);
+
+        // Assert
+        $this->assertEquals('completed', $result['result']['status']);
+    }
+
+    /**
+     * Test that deletePoints works with different collection names
+     *
+     * @testdox Deletes points from collection with specific name
+     */
+    public function testDeleteMultiplePointsFromSpecificCollection(): void
+    {
+        // Arrange
+        $ids = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 6,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/production_vectors/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('production_vectors', $ids);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that deletePoints returns complete API response
+     *
+     * @testdox Returns complete response with operation metadata
+     */
+    public function testDeleteMultiplePointsReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $ids = [100, 200, 300];
+        $expectedResponse = [
+            'result' => [
+                'operation_id' => 7,
+                'status'       => 'completed',
+            ],
+            'status' => 'ok',
+            'time'   => 0.004567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/delete',
+                ['points' => $ids]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->deletePoints('my_collection', $ids);
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
 }
