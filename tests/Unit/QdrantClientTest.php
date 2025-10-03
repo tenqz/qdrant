@@ -3734,4 +3734,664 @@ class QdrantClientTest extends TestCase
         // Assert
         $this->assertCount(1, $result['result']);
     }
+
+    // ========================================================================
+    // Recommend Tests
+    // ========================================================================
+
+    /**
+     * Test that recommend works with only positive examples
+     *
+     * @testdox Recommends points based on positive examples
+     */
+    public function testRecommendWithPositiveExamples(): void
+    {
+        // Arrange
+        $positive = [1, 5, 10];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 15,
+                    'score'   => 0.92,
+                    'payload' => ['category' => 'similar'],
+                ],
+                [
+                    'id'      => 20,
+                    'score'   => 0.88,
+                    'payload' => ['category' => 'similar'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.004567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('test_collection', $positive);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with positive and negative examples
+     *
+     * @testdox Recommends points using both positive and negative examples
+     */
+    public function testRecommendWithPositiveAndNegativeExamples(): void
+    {
+        // Arrange
+        $positive = [1, 5];
+        $negative = [3, 7];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 12,
+                    'score'   => 0.89,
+                    'payload' => ['type' => 'recommended'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => $negative,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('test_collection', $positive, $negative);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with custom limit
+     *
+     * @testdox Recommends with custom result limit
+     */
+    public function testRecommendWithCustomLimit(): void
+    {
+        // Arrange
+        $positive = [1, 2, 3];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 10, 'score' => 0.95],
+                ['id' => 11, 'score' => 0.92],
+                ['id' => 12, 'score' => 0.88],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002345,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 3,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('vectors', $positive, [], 3);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with filter
+     *
+     * @testdox Recommends with filter conditions applied
+     */
+    public function testRecommendWithFilter(): void
+    {
+        // Arrange
+        $positive = [5, 10];
+        $filter = [
+            'must' => [
+                ['key' => 'category', 'match' => ['value' => 'tech']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 20,
+                    'score'   => 0.93,
+                    'payload' => ['category' => 'tech'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                    'filter'       => $filter,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('test_collection', $positive, [], 10, $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with vectors included
+     *
+     * @testdox Recommends with vectors included in response
+     */
+    public function testRecommendWithVectors(): void
+    {
+        // Arrange
+        $positive = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 10,
+                    'score'   => 0.96,
+                    'vector'  => [0.1, 0.2, 0.3],
+                    'payload' => ['name' => 'Similar Item'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.005123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/embeddings/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => true,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('embeddings', $positive, [], 10, null, true, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works without payload
+     *
+     * @testdox Recommends without payload in response
+     */
+    public function testRecommendWithoutPayload(): void
+    {
+        // Arrange
+        $positive = [5, 15];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 25, 'score' => 0.91],
+                ['id' => 30, 'score' => 0.85],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => false,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('vectors', $positive, [], 10, null, false);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with string IDs
+     *
+     * @testdox Recommends using string IDs (UUIDs)
+     */
+    public function testRecommendWithStringIds(): void
+    {
+        // Arrange
+        $positive = ['uuid-123', 'uuid-456'];
+        $negative = ['uuid-789'];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 'uuid-abc',
+                    'score'   => 0.94,
+                    'payload' => ['type' => 'similar'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => $negative,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('documents', $positive, $negative);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with single positive example
+     *
+     * @testdox Recommends based on single positive example
+     */
+    public function testRecommendWithSinglePositive(): void
+    {
+        // Arrange
+        $positive = [42];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 43, 'score' => 0.89, 'payload' => ['similar' => true]],
+                ['id' => 44, 'score' => 0.82, 'payload' => ['similar' => true]],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('test_collection', $positive);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with all parameters
+     *
+     * @testdox Recommends with all parameters specified
+     */
+    public function testRecommendWithAllParameters(): void
+    {
+        // Arrange
+        $positive = [1, 2, 3];
+        $negative = [4, 5];
+        $filter = [
+            'must' => [
+                ['key' => 'status', 'match' => ['value' => 'active']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 10,
+                    'score'   => 0.97,
+                    'vector'  => [0.1, 0.2, 0.3, 0.4],
+                    'payload' => ['status' => 'active', 'name' => 'Best Match'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.006789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/full_recommend/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => $negative,
+                    'limit'        => 5,
+                    'with_payload' => true,
+                    'with_vector'  => true,
+                    'filter'       => $filter,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('full_recommend', $positive, $negative, 5, $filter, true, true);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend returns empty results when no matches
+     *
+     * @testdox Returns empty results when no recommendations found
+     */
+    public function testRecommendReturnsEmptyResults(): void
+    {
+        // Arrange
+        $positive = [999];
+        $expectedResponse = [
+            'result' => [],
+            'status' => 'ok',
+            'time'   => 0.001234,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('test_collection', $positive);
+
+        // Assert
+        $this->assertEmpty($result['result']);
+    }
+
+    /**
+     * Test that recommend returns results with scores
+     *
+     * @testdox Returns recommendation results with score values
+     */
+    public function testRecommendReturnsResultsWithScores(): void
+    {
+        // Arrange
+        $positive = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 10, 'score' => 0.95],
+                ['id' => 11, 'score' => 0.87],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/vectors/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('vectors', $positive);
+
+        // Assert
+        $this->assertArrayHasKey('score', $result['result'][0]);
+    }
+
+    /**
+     * Test that recommend works with complex filter
+     *
+     * @testdox Recommends with complex filter conditions
+     */
+    public function testRecommendWithComplexFilter(): void
+    {
+        // Arrange
+        $positive = [5, 10];
+        $filter = [
+            'must' => [
+                ['key' => 'category', 'match' => ['value' => 'tech']],
+                ['key' => 'status', 'match' => ['value' => 'active']],
+            ],
+            'should' => [
+                ['key' => 'priority', 'match' => ['value' => 'high']],
+            ],
+        ];
+
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 25,
+                    'score'   => 0.91,
+                    'payload' => ['category' => 'tech', 'status' => 'active'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.004123,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/documents/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                    'filter'       => $filter,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('documents', $positive, [], 10, $filter);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend works with different collection names
+     *
+     * @testdox Recommends in specific collection
+     */
+    public function testRecommendInSpecificCollection(): void
+    {
+        // Arrange
+        $positive = [1, 2];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 10, 'score' => 0.88],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002456,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/production_vectors/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('production_vectors', $positive);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    /**
+     * Test that recommend returns complete API response
+     *
+     * @testdox Returns complete response with all metadata
+     */
+    public function testRecommendReturnsCompleteResponse(): void
+    {
+        // Arrange
+        $positive = [1];
+        $expectedResponse = [
+            'result' => [
+                [
+                    'id'      => 5,
+                    'score'   => 0.92,
+                    'payload' => ['data' => 'test'],
+                ],
+            ],
+            'status' => 'ok',
+            'time'   => 0.002789,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/my_collection/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => [],
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('my_collection', $positive);
+
+        // Assert
+        $this->assertArrayHasKey('result', $result);
+    }
+
+    /**
+     * Test that recommend works with multiple negative examples
+     *
+     * @testdox Recommends while avoiding multiple negative examples
+     */
+    public function testRecommendWithMultipleNegativeExamples(): void
+    {
+        // Arrange
+        $positive = [1, 2];
+        $negative = [10, 20, 30];
+        $expectedResponse = [
+            'result' => [
+                ['id' => 5, 'score' => 0.89, 'payload' => ['type' => 'good']],
+            ],
+            'status' => 'ok',
+            'time'   => 0.003567,
+        ];
+
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                '/collections/test_collection/points/recommend',
+                [
+                    'positive'     => $positive,
+                    'negative'     => $negative,
+                    'limit'        => 10,
+                    'with_payload' => true,
+                    'with_vector'  => false,
+                ]
+            )
+            ->willReturn($expectedResponse);
+
+        // Act
+        $result = $this->client->recommend('test_collection', $positive, $negative);
+
+        // Assert
+        $this->assertEquals($expectedResponse, $result);
+    }
 }
