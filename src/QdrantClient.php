@@ -389,4 +389,50 @@ class QdrantClient
 
         return $this->request('POST', "/collections/{$collection}/points/search", $body);
     }
+
+    /**
+     * Recommend points based on positive and negative examples
+     *
+     * Finds similar points using positive examples (what you want) and negative examples
+     * (what you don't want). The algorithm averages positive examples and moves away from negatives.
+     *
+     * @param string $collection Collection name
+     * @param array $positive Array of positive example point IDs (what you like)
+     * @param array $negative Array of negative example point IDs (what you don't like, default: [])
+     * @param int $limit Maximum number of results to return (default: 10)
+     * @param array|null $filter Optional filter conditions to apply
+     * @param bool $withPayload Include payload data in response (default: true)
+     * @param bool $withVector Include vector data in response (default: false)
+     * @return array Recommendation results with matched points and scores
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $results = $client->recommend('my_collection', [1, 5, 10], [3, 7], 5);
+     * foreach ($results['result'] as $point) {
+     *     echo "Recommended ID: {$point['id']}, Score: {$point['score']}\n";
+     * }
+     */
+    public function recommend(
+        string $collection,
+        array $positive,
+        array $negative = [],
+        int $limit = 10,
+        ?array $filter = null,
+        bool $withPayload = true,
+        bool $withVector = false
+    ): array {
+        $body = [
+            'positive'     => $positive,
+            'negative'     => $negative,
+            'limit'        => $limit,
+            'with_payload' => $withPayload,
+            'with_vector'  => $withVector,
+        ];
+
+        if ($filter !== null) {
+            $body['filter'] = $filter;
+        }
+
+        return $this->request('POST', "/collections/{$collection}/points/recommend", $body);
+    }
 }
