@@ -170,4 +170,33 @@ class QdrantClient
     {
         return $this->request('GET', "/collections/{$collection}/points/{$id}");
     }
+
+    /**
+     * Get multiple points by IDs
+     *
+     * Retrieves multiple points from the collection by their IDs in a single request.
+     * Allows selective inclusion of payload and vector data to optimize response size.
+     *
+     * @param string $collection Collection name
+     * @param array $ids Array of point IDs (integers or strings)
+     * @param bool $withPayload Include payload data in response (default: true)
+     * @param bool $withVector Include vector data in response (default: false)
+     * @return array Points data from Qdrant API
+     * @throws TransportException On network or API errors
+     *
+     * Example:
+     * $points = $client->getPoints('my_collection', [1, 2, 3], true, false);
+     */
+    public function getPoints(
+        string $collection,
+        array $ids,
+        bool $withPayload = true,
+        bool $withVector = false
+    ): array {
+        return $this->request('POST', "/collections/{$collection}/points", [
+            'ids'          => $ids,
+            'with_payload' => $withPayload,
+            'with_vector'  => $withVector,
+        ]);
+    }
 }
